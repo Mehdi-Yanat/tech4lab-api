@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model admin {
+  id       Int       @id @default(autoincrement())
+  username String    @unique
+  password String
+  tokens   String[]
+  role     String    @default("admin")
+  clients  clients[]
+}
+
+model clients {
+  id             Int              @id @default(autoincrement())
+  username       String           @unique
+  password       String
+  tokens         String[]
+  role           String           @default("client")
+  admin          admin?           @relation(fields: [adminId], references: [id])
+  adminId        Int?
+  productionSite productionSite[]
+}
+
+model productionSite {
+  id        Int       @id @default(autoincrement())
+  placeName String
+  machines  machine[]
+  clients   clients?  @relation(fields: [clientsId], references: [id])
+  clientsId Int?
+}
+
+model machine {
+  id               Int             @id @default(autoincrement())
+  machineName      String
+  pieces           pieces[]
+  productionSite   productionSite? @relation(fields: [productionSiteId], references: [id])
+  productionSiteId Int?
+}
+
+model pieces {
+  id        Int      @id @default(autoincrement())
+  pieceName String
+  machine   machine? @relation(fields: [machineId], references: [id])
+  machineId Int?
+}
