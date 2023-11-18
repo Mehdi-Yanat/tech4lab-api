@@ -1,7 +1,15 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { AddClientDto, CreateAdminDto } from './admin.dto';
+import ExtendedRequest from 'src/interface';
+
+const saltOrRounds = 10;
 
 @Injectable()
 export class AdminService {
@@ -19,7 +27,6 @@ export class AdminService {
       return 'Admin already initialized.';
     }
 
-    const saltOrRounds = 10;
     const password = process.env.ADMIN_PASSWORD;
     const hash = await bcrypt.hash(password, saltOrRounds);
 
@@ -55,9 +62,37 @@ export class AdminService {
     };
   }
 
-  async addClient(addClient: AddClientDto): Promise<any> {
-    console.log('====================================');
-    console.log(addClient);
-    console.log('====================================');
+  async addClient(addClient: AddClientDto, req: ExtendedRequest): Promise<any> {
+    if (!req.admin) {
+      throw new UnauthorizedException();
+    }
+
+    const hash = await bcrypt.hash(addClient.password, saltOrRounds);
+
+    const isClientExists = await this.prisma.clients.findFirst({
+      where: {
+        username: addClient.username,
+      },
+    });
+
+    if (isClientExists) {
+      throw new HttpException('Client already exists', HttpStatus.FORBIDDEN);
+    } else {
+      await this.prisma.clients.create({
+        data: {
+          username: addClient.username,
+          password: hash,
+          admin: {
+            connect: {
+              id: req.admin.id,
+            },
+          },
+        },
+      });
+
+      return {
+        message: 'Client was added successfully!',
+      };
+    }
   }
 }

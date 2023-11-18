@@ -1,8 +1,9 @@
 // auth.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma.service';
 import * as bcrypt from 'bcrypt';
+import ExtendedRequest from 'src/interface';
 
 @Injectable()
 export class AuthService {
@@ -84,5 +85,39 @@ export class AuthService {
     }
 
     return token;
+  }
+
+  async getDetails({ admin, user }: ExtendedRequest): Promise<any> {
+    if (admin) {
+      const adminData = await this.prisma.admin.findUnique({
+        where: {
+          id: admin.id,
+        },
+      });
+
+      delete adminData.tokens;
+
+      return {
+        message: '',
+        admin: adminData,
+      };
+    }
+
+    if (user) {
+      const userData = await this.prisma.clients.findUnique({
+        where: {
+          id: user.id,
+        },
+      });
+
+      delete userData.tokens;
+
+      return {
+        message: '',
+        client: userData,
+      };
+    }
+
+    throw new UnauthorizedException();
   }
 }

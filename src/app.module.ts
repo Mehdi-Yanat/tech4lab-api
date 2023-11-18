@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  Module,
+  NestModule,
+  MiddlewareConsumer,
+  RequestMethod,
+} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
@@ -10,6 +15,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
+import { SuperAdminMiddleware } from './middlewares/admin-auth.middlewares';
+import { ExcelService } from './excel.service';
+import { CsvService } from './csv.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -27,7 +35,26 @@ import { AuthService } from './auth/auth.service';
     PrismaService,
     AuthService,
     JwtStrategy,
+    ExcelService,
+    CsvService,
   ],
   exports: [JwtStrategy],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(SuperAdminMiddleware).forRoutes(
+      {
+        path: 'admin/add/clients',
+        method: RequestMethod.POST,
+      },
+      {
+        path: 'admin/upload',
+        method: RequestMethod.POST,
+      },
+      {
+        path: 'auth/profile',
+        method: RequestMethod.GET,
+      },
+    );
+  }
+}

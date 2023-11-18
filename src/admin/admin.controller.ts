@@ -1,10 +1,27 @@
-import { Controller, OnModuleInit, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  OnModuleInit,
+  Post,
+  Body,
+  Req,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AddClientDto, CreateAdminDto } from './admin.dto';
+import ExtendedRequest from 'src/interface';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { multerConfig } from 'src/multer.config';
+import { ExcelService } from 'src/excel.service';
+import { CsvService } from 'src/csv.service';
 
 @Controller('admin')
 export class AdminController implements OnModuleInit {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly excelService: ExcelService,
+    private readonly csvService: CsvService,
+  ) {}
 
   onModuleInit() {
     this.initAdminInternally();
@@ -22,7 +39,28 @@ export class AdminController implements OnModuleInit {
   }
 
   @Post('add/clients')
-  addClient(@Body() addClient: AddClientDto) {
-    return this.adminService.addClient(addClient);
+  addClient(@Body() addClient: AddClientDto, @Req() req: ExtendedRequest) {
+    return this.adminService.addClient(addClient, req);
+  }
+
+  @Post('upload')
+  @UseInterceptors(FileInterceptor('file', multerConfig))
+  async uploadExcel(@UploadedFile() file: any, @Req() req: ExtendedRequest) {
+    const fileExtension = file.originalname.split('.').pop().toLowerCase();
+
+    if (fileExtension === 'xlsx') {
+      await this.excelService.processExcel(file.path, req.admin);
+    } else if (fileExtension === 'csv') {
+      await this.csvService.processCsv(file.path, req.admin);
+    } else {
+      // Handle unsupported file types
+      throw new Error('Unsupported file type');
+    }
+
+    // You can return a success message or any other response as needed
+    return {
+      success: true,
+      message: 'File uploaded and processed successfully.',
+    };
   }
 }
