@@ -93,9 +93,37 @@ export class AuthService {
         where: {
           id: admin.id,
         },
+        select: {
+          id: true,
+          username: true,
+          password: true,
+          clients: {
+            select: {
+              id: true,
+              username: true,
+              productionSite: {
+                select: {
+                  id: true,
+                  placeName: true,
+                  machines: {
+                    select: {
+                      id: true,
+                      machineName: true,
+                      pieces: {
+                        select: {
+                          id: true,
+                          pieceName: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          role: true,
+        },
       });
-
-      delete adminData.tokens;
 
       return {
         message: '',
@@ -108,9 +136,30 @@ export class AuthService {
         where: {
           id: user.id,
         },
+        select: {
+          id: true,
+          username: true,
+          password: true,
+          productionSite: {
+            select: {
+              id: true,
+              placeName: true,
+              machines: {
+                select: {
+                  id: true,
+                  machineName: true,
+                  pieces: {
+                    select: {
+                      id: true,
+                      pieceName: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       });
-
-      delete userData.tokens;
 
       return {
         message: '',

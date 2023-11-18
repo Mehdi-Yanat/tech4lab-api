@@ -1,6 +1,10 @@
 // super-admin.middleware.ts
 
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import ExtendedRequest from 'src/interface';
@@ -15,7 +19,7 @@ export class SuperAdminMiddleware implements NestMiddleware {
       const authorization = req.header('authorization');
 
       if (!authorization || !authorization.startsWith('Bearer ')) {
-        throw new Error('Non Autorisé !');
+        throw new UnauthorizedException();
       }
 
       const token = authorization.split('Bearer ')[1];
@@ -27,7 +31,7 @@ export class SuperAdminMiddleware implements NestMiddleware {
       });
 
       if (!admin || !admin.tokens.includes(token)) {
-        throw new Error('Non Autorisé !');
+        throw new UnauthorizedException();
       }
 
       if (admin.role === 'admin') {
@@ -36,7 +40,7 @@ export class SuperAdminMiddleware implements NestMiddleware {
 
         req.admin = admin;
       } else {
-        throw new Error('Access only for admin!');
+        throw new UnauthorizedException();
       }
 
       next();
@@ -44,7 +48,7 @@ export class SuperAdminMiddleware implements NestMiddleware {
       console.log(error.message);
       return res.json({
         success: false,
-        message: 'Non Autorisé !',
+        message: 'Not allowed!',
       });
     }
   }

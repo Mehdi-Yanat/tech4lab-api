@@ -18,6 +18,7 @@ import { AuthService } from './auth/auth.service';
 import { SuperAdminMiddleware } from './middlewares/admin-auth.middlewares';
 import { ExcelService } from './excel.service';
 import { CsvService } from './csv.service';
+import { AuthMiddleware } from './middlewares/auth.middlewares';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -51,10 +52,10 @@ export class AppModule implements NestModule {
         path: 'admin/upload',
         method: RequestMethod.POST,
       },
-      {
-        path: 'auth/profile',
-        method: RequestMethod.GET,
-      },
     );
+    consumer.apply(AuthMiddleware).forRoutes({
+      path: 'auth/profile',
+      method: RequestMethod.GET,
+    });
   }
 }

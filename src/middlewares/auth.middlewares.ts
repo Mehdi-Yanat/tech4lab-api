@@ -1,6 +1,10 @@
 // auth.middleware.ts
 
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import ExtendedRequest from 'src/interface';
@@ -15,32 +19,41 @@ export class AuthMiddleware implements NestMiddleware {
       const authorization = req.header('authorization');
 
       if (!authorization || !authorization.startsWith('Bearer ')) {
-        throw new Error('Non Autorisé !');
+        throw new UnauthorizedException();
       }
 
       const token = authorization.split('Bearer ')[1];
 
-      const verifiedToken: any = jwt.verify(token, 'your-secret-key'); // Replace with your secret key
+      const verifiedToken: any = jwt.verify(token, process.env.SECRET_KEY); // Replace with your secret key
 
       const user = await this.prisma.clients.findUnique({
-        where: { id: verifiedToken.userId },
+        where: { id: verifiedToken.sub },
       });
 
-      if (!user || !user.tokens.includes(token)) {
-        throw new Error('Non Autorisé !');
+      const admin = await this.prisma.admin.findUnique({
+        where: { id: verifiedToken.sub },
+      });
+
+      if (user) {
+        delete user.password;
+        delete user.tokens;
+
+        req.user = user;
       }
 
-      delete user.password;
-      delete user.tokens;
+      if (admin) {
+        delete admin.password;
+        delete admin.tokens;
 
-      req.user = user;
+        req.admin = admin;
+      }
 
       next();
     } catch (error) {
       console.log(error.message);
       return res.json({
         success: false,
-        message: 'Non Autorisé !',
+        message: 'Not allowed!',
       });
     }
   }
