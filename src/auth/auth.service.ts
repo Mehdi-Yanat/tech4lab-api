@@ -126,6 +126,7 @@ export class AuthService {
       });
 
       return {
+        success: true,
         message: '',
         admin: adminData,
       };
@@ -162,6 +163,7 @@ export class AuthService {
       });
 
       return {
+        success: true,
         message: '',
         client: userData,
       };

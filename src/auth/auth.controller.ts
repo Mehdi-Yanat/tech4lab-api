@@ -28,7 +28,11 @@ export class AuthController {
     }
 
     const token = await this.authService.generateToken(user);
-    return { message: 'Login successfully!', access_token: token };
+    return {
+      success: true,
+      message: 'Login successfully!',
+      access_token: token,
+    };
   }
 
   @Get('profile')
