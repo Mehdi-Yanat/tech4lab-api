@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import * as exceljs from 'exceljs';
 import { PrismaService } from './prisma.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import * as bcrypt from 'bcrypt';
+
+const saltOrRounds = 10;
 
 @Injectable()
 export class ExcelService {
@@ -31,12 +34,14 @@ export class ExcelService {
           const [, clientUsername, productionSiteName, machineName, pieceName] =
             rowDataArray;
 
+          const hash = await bcrypt.hash(clientUsername, saltOrRounds);
+
           const client = await this.prisma.clients.upsert({
             where: { username: clientUsername },
             update: {},
             create: {
               username: clientUsername,
-              password: 'password',
+              password: hash,
               role: 'client',
               adminId: admin.id,
             },
