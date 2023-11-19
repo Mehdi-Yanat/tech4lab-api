@@ -9,6 +9,8 @@ import {
   HttpException,
   HttpStatus,
   Get,
+  Delete,
+  Param,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AddClientDto, CreateAdminDto } from './admin.dto';
@@ -44,6 +46,14 @@ export class AdminController implements OnModuleInit {
   @Post('add/clients')
   addClient(@Body() addClient: AddClientDto, @Req() req: ExtendedRequest) {
     return this.adminService.addClient(addClient, req);
+  }
+
+  @Delete('delete/clients/:clientId')
+  deleteClient(
+    @Param('clientId') clientId: string,
+    @Req() req: ExtendedRequest,
+  ) {
+    return this.adminService.deleteClientById(clientId, req);
   }
 
   @Get('get/clients')

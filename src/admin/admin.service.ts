@@ -124,4 +124,38 @@ export class AdminService {
       clients,
     };
   }
+
+  async deleteClientById(
+    clientId: string,
+    { admin }: ExtendedRequest,
+  ): Promise<any> {
+    if (!admin) {
+      throw new UnauthorizedException();
+    }
+
+    if (clientId === undefined) {
+      throw new HttpException('Please provide client Id', HttpStatus.FORBIDDEN);
+    }
+
+    const isClientExists = await this.prisma.clients.findFirst({
+      where: {
+        id: parseInt(clientId),
+      },
+    });
+
+    if (!isClientExists) {
+      throw new HttpException('Client not found', HttpStatus.FORBIDDEN);
+    }
+
+    await this.prisma.clients.delete({
+      where: {
+        id: parseInt(clientId),
+      },
+    });
+
+    return {
+      success: true,
+      message: 'client deleted successfully!',
+    };
+  }
 }

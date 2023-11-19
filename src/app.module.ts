@@ -65,6 +65,10 @@ export class AppModule implements NestModule {
         method: RequestMethod.POST,
       },
       {
+        path: 'admin/delete/clients/:clientId',
+        method: RequestMethod.DELETE,
+      },
+      {
         path: 'admin/upload',
         method: RequestMethod.POST,
       },
