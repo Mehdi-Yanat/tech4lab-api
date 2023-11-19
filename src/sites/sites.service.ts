@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import ExtendedRequest from 'src/interface';
 import { PrismaService } from 'src/prisma.service';
+import { siteDataDto } from './sites.dto';
 
 @Injectable()
 export class SitesService {
@@ -47,5 +48,30 @@ export class SitesService {
         productionSites: sites,
       };
     }
+  }
+
+  async addSites(
+    dataSite: siteDataDto,
+    { user }: ExtendedRequest,
+  ): Promise<any> {
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    await this.prisma.productionSite.create({
+      data: {
+        placeName: dataSite.placeName,
+        clients: {
+          connect: {
+            id: user.id,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Production Site added successfully!',
+    };
   }
 }

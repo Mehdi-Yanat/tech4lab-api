@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import ExtendedRequest from 'src/interface';
 import { PrismaService } from 'src/prisma.service';
+import { MachineDtoData } from './machine.dto';
 
 @Injectable()
 export class MachinesService {
@@ -14,6 +20,7 @@ export class MachinesService {
           machineName: true,
           productionSite: {
             select: {
+              id: true,
               placeName: true,
             },
           },
@@ -43,6 +50,7 @@ export class MachinesService {
               pieces: true,
               productionSite: {
                 select: {
+                  id: true,
                   placeName: true,
                 },
               },
@@ -59,5 +67,42 @@ export class MachinesService {
         machines: machinesArray,
       };
     }
+  }
+
+  async addMachines(
+    dataMachine: MachineDtoData,
+    { user }: ExtendedRequest,
+  ): Promise<any> {
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    if (dataMachine.productionSiteId === 0) {
+      throw new HttpException(
+        'Please provide a production site identifier',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    await this.prisma.machine.create({
+      data: {
+        machineName: dataMachine.machineName,
+        clients: {
+          connect: {
+            id: user.id,
+          },
+        },
+        productionSite: {
+          connect: {
+            id: dataMachine.productionSiteId,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Production Site added successfully!',
+    };
   }
 }

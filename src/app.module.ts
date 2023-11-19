@@ -87,8 +87,16 @@ export class AppModule implements NestModule {
         method: RequestMethod.GET,
       },
       {
+        path: 'production-sites/add',
+        method: RequestMethod.POST,
+      },
+      {
         path: 'machines',
         method: RequestMethod.GET,
+      },
+      {
+        path: 'machines/add',
+        method: RequestMethod.POST,
       },
       {
         path: 'pieces',
