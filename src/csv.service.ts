@@ -47,19 +47,52 @@ export class CsvService {
 
             const productionSite = await this.prisma.productionSite.upsert({
               where: { placeName: productionSiteName },
-              update: {},
+              update: {
+                clients: {
+                  connect: {
+                    id: client.id,
+                  },
+                },
+              },
               create: { placeName: productionSiteName, clientsId: client.id },
             });
 
             const machine = await this.prisma.machine.upsert({
               where: { machineName },
-              update: {},
+              update: {
+                clients: {
+                  connect: {
+                    id: client.id,
+                  },
+                },
+                productionSite: {
+                  connect: {
+                    id: productionSite.id,
+                  },
+                },
+              },
               create: { machineName, productionSiteId: productionSite.id },
             });
 
             await this.prisma.pieces.upsert({
               where: { pieceName },
-              update: {},
+              update: {
+                clients: {
+                  connect: {
+                    id: client.id,
+                  },
+                },
+                productionSite: {
+                  connect: {
+                    id: productionSite.id,
+                  },
+                },
+                machine: {
+                  connect: {
+                    id: machine.id,
+                  },
+                },
+              },
               create: { pieceName, machineId: machine.id },
             });
           }

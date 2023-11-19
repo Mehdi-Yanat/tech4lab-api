@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import ExtendedRequest from 'src/interface';
 import { PrismaService } from 'src/prisma.service';
 import { siteDataDto } from './sites.dto';
@@ -58,12 +63,29 @@ export class SitesService {
       throw new UnauthorizedException();
     }
 
+    const isSiteExist = await this.prisma.productionSite.findFirst({
+      where: {
+        placeName: dataSite.placeName,
+      },
+    });
+
+    if (isSiteExist) {
+      throw new HttpException('Site already exists', HttpStatus.CONFLICT);
+    }
+
+    if (user.role === 'admin' && !dataSite.ClientId) {
+      throw new HttpException(
+        'Admin need to provide a client id',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     await this.prisma.productionSite.create({
       data: {
         placeName: dataSite.placeName,
         clients: {
           connect: {
-            id: user.id,
+            id: user.role === 'admin' ? dataSite.ClientId : user.id,
           },
         },
       },
@@ -71,7 +93,7 @@ export class SitesService {
 
     return {
       success: true,
-      message: 'Production Site added successfully!',
+      message: 'Production Site was added successfully!',
     };
   }
 }

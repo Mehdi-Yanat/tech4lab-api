@@ -38,33 +38,31 @@ export class MachinesService {
         machines,
       };
     } else {
-      const machines = await this.prisma.productionSite.findMany({
+      const machines = await this.prisma.machine.findMany({
         where: {
           clientsId: req.user.id,
         },
         select: {
-          machines: {
+          id: true,
+          machineName: true,
+          productionSite: {
             select: {
               id: true,
-              machineName: true,
-              pieces: true,
-              productionSite: {
-                select: {
-                  id: true,
-                  placeName: true,
-                },
-              },
+              placeName: true,
+            },
+          },
+          pieces: {
+            select: {
+              pieceName: true,
             },
           },
         },
       });
 
-      let machinesArray: any = machines.map((el) => el.machines);
-      machinesArray = machinesArray.flat(1);
       return {
         success: true,
         message: '',
-        machines: machinesArray,
+        machines: machines,
       };
     }
   }
@@ -77,11 +75,28 @@ export class MachinesService {
       throw new UnauthorizedException();
     }
 
-    if (dataMachine.productionSiteId === 0) {
+    if (!dataMachine.productionSiteId) {
       throw new HttpException(
         'Please provide a production site identifier',
         HttpStatus.FORBIDDEN,
       );
+    }
+
+    if (user.role === 'admin' && !dataMachine.ClientId) {
+      throw new HttpException(
+        'Admin need to provide a client id',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    const machineExists = await this.prisma.machine.findFirst({
+      where: {
+        machineName: dataMachine.machineName,
+      },
+    });
+
+    if (machineExists) {
+      throw new HttpException('Machine already exists', HttpStatus.CONFLICT);
     }
 
     await this.prisma.machine.create({
@@ -89,7 +104,7 @@ export class MachinesService {
         machineName: dataMachine.machineName,
         clients: {
           connect: {
-            id: user.id,
+            id: user.role === 'admin' ? dataMachine.ClientId : user.id,
           },
         },
         productionSite: {
@@ -102,7 +117,7 @@ export class MachinesService {
 
     return {
       success: true,
-      message: 'Production Site added successfully!',
+      message: 'Machine was added successfully!',
     };
   }
 }

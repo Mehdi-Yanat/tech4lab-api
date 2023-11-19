@@ -28,12 +28,15 @@ model clients {
   admin          admin?           @relation(fields: [adminId], references: [id])
   adminId        Int?
   productionSite productionSite[]
+  machines       machine[]
+  pieces         pieces[]
 }
 
 model productionSite {
   id        Int       @id @default(autoincrement())
   placeName String    @unique
   machines  machine[]
+  pieces    pieces[]
   clients   clients?  @relation(fields: [clientsId], references: [id])
   clientsId Int?
 }
@@ -44,11 +47,17 @@ model machine {
   pieces           pieces[]
   productionSite   productionSite? @relation(fields: [productionSiteId], references: [id])
   productionSiteId Int?
+  clients          clients?        @relation(fields: [clientsId], references: [id])
+  clientsId        Int?
 }
 
 model pieces {
-  id        Int      @id @default(autoincrement())
-  pieceName String   @unique
-  machine   machine? @relation(fields: [machineId], references: [id])
-  machineId Int?
+  id               Int             @id @default(autoincrement())
+  pieceName        String          @unique
+  machine          machine?        @relation(fields: [machineId], references: [id])
+  machineId        Int?
+  clients          clients?        @relation(fields: [clientsId], references: [id])
+  clientsId        Int?
+  productionSite   productionSite? @relation(fields: [productionSiteId], references: [id])
+  productionSiteId Int?
 }

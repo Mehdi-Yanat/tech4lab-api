@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import ExtendedRequest from 'src/interface';
 import { PrismaService } from 'src/prisma.service';
+import { PiecesDtoData } from './pieces.dto';
 
 @Injectable()
 export class PiecesService {
@@ -31,26 +37,19 @@ export class PiecesService {
         pieces,
       };
     } else {
-      const pieces = await this.prisma.productionSite.findMany({
+      const pieces = await this.prisma.pieces.findMany({
         where: {
           clientsId: req.user.id,
         },
         select: {
-          machines: {
+          id: true,
+          pieceName: true,
+          machine: {
             select: {
-              pieces: {
+              machineName: true,
+              productionSite: {
                 select: {
-                  pieceName: true,
-                  machine: {
-                    select: {
-                      machineName: true,
-                      productionSite: {
-                        select: {
-                          placeName: true,
-                        },
-                      },
-                    },
-                  },
+                  placeName: true,
                 },
               },
             },
@@ -58,13 +57,63 @@ export class PiecesService {
         },
       });
 
-      let piecesArray: any = pieces.map((el) => el.machines[0].pieces);
-      piecesArray = piecesArray.flat(1);
       return {
         success: true,
         message: '',
-        pieces: piecesArray,
+        pieces: pieces,
       };
     }
+  }
+
+  async addPieces(
+    dataPieces: PiecesDtoData,
+    { user }: ExtendedRequest,
+  ): Promise<any> {
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    const isPieceExist = await this.prisma.pieces.findFirst({
+      where: {
+        pieceName: dataPieces.pieceName,
+      },
+    });
+
+    if (isPieceExist) {
+      throw new HttpException('Pieces already exists', HttpStatus.CONFLICT);
+    }
+
+    if (user.role === 'admin' && !dataPieces.ClientId) {
+      throw new HttpException(
+        'Admin need to provide a client id',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    await this.prisma.pieces.create({
+      data: {
+        pieceName: dataPieces.pieceName,
+        clients: {
+          connect: {
+            id: user.role === 'admin' ? dataPieces.ClientId : user.id,
+          },
+        },
+        machine: {
+          connect: {
+            id: dataPieces.machineId,
+          },
+        },
+        productionSite: {
+          connect: {
+            id: dataPieces.productionSiteId,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Pieces was added successfully!',
+    };
   }
 }

@@ -102,6 +102,10 @@ export class AppModule implements NestModule {
         path: 'pieces',
         method: RequestMethod.GET,
       },
+      {
+        path: 'pieces/add',
+        method: RequestMethod.POST,
+      },
     );
   }
 }

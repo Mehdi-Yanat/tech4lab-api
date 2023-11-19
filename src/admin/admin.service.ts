@@ -87,6 +87,11 @@ export class AdminService {
               id: req.admin.id,
             },
           },
+          productionSite: {
+            connect: {
+              id: addClient.productionSiteId,
+            },
+          },
         },
       });
 

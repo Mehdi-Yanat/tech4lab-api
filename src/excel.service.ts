@@ -49,20 +49,62 @@ export class ExcelService {
 
           const productionSite = await this.prisma.productionSite.upsert({
             where: { placeName: productionSiteName },
-            update: {},
+            update: {
+              clients: {
+                connect: {
+                  id: client.id,
+                },
+              },
+            },
             create: { placeName: productionSiteName, clientsId: client.id },
           });
 
           const machine = await this.prisma.machine.upsert({
             where: { machineName },
-            update: {},
-            create: { machineName, productionSiteId: productionSite.id },
+            update: {
+              clients: {
+                connect: {
+                  id: client.id,
+                },
+              },
+              productionSite: {
+                connect: {
+                  id: productionSite.id,
+                },
+              },
+            },
+            create: {
+              machineName,
+              productionSiteId: productionSite.id,
+              clientsId: client.id,
+            },
           });
 
           await this.prisma.pieces.upsert({
             where: { pieceName },
-            update: {},
-            create: { pieceName, machineId: machine.id },
+            update: {
+              clients: {
+                connect: {
+                  id: client.id,
+                },
+              },
+              productionSite: {
+                connect: {
+                  id: productionSite.id,
+                },
+              },
+              machine: {
+                connect: {
+                  id: machine.id,
+                },
+              },
+            },
+            create: {
+              pieceName,
+              machineId: machine.id,
+              clientsId: client.id,
+              productionSiteId: productionSite.id,
+            },
           });
         } catch (error) {
           if (error instanceof PrismaClientKnownRequestError) {
