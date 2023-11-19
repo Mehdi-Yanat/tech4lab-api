@@ -6,6 +6,9 @@ import {
   Req,
   UseInterceptors,
   UploadedFile,
+  HttpException,
+  HttpStatus,
+  Get,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { AddClientDto, CreateAdminDto } from './admin.dto';
@@ -43,6 +46,11 @@ export class AdminController implements OnModuleInit {
     return this.adminService.addClient(addClient, req);
   }
 
+  @Get('get/clients')
+  getClients(@Req() req: ExtendedRequest) {
+    return this.adminService.getAllClients(req);
+  }
+
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', multerConfig))
   async uploadExcel(@UploadedFile() file: any, @Req() req: ExtendedRequest) {
@@ -54,10 +62,8 @@ export class AdminController implements OnModuleInit {
       await this.csvService.processCsv(file.path, req.admin);
     } else {
       // Handle unsupported file types
-      throw new Error('Unsupported file type');
+      throw new HttpException('Unsupported file type', HttpStatus.FORBIDDEN);
     }
-
-    // You can return a success message or any other response as needed
     return {
       success: true,
       message: 'File uploaded and processed successfully.',

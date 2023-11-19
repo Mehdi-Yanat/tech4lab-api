@@ -87,88 +87,47 @@ export class AuthService {
     return token;
   }
 
-  async getDetails({ admin, user }: ExtendedRequest): Promise<any> {
-    if (admin) {
-      const adminData = await this.prisma.admin.findUnique({
-        where: {
-          id: admin.id,
-        },
-        select: {
-          id: true,
-          username: true,
-          password: true,
-          clients: {
-            select: {
-              id: true,
-              username: true,
-              productionSite: {
-                select: {
-                  id: true,
-                  placeName: true,
-                  machines: {
-                    select: {
-                      id: true,
-                      machineName: true,
-                      pieces: {
-                        select: {
-                          id: true,
-                          pieceName: true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-          role: true,
-        },
-      });
-
-      return {
-        success: true,
-        message: '',
-        admin: adminData,
-      };
+  async getDetails({ user }: ExtendedRequest): Promise<any> {
+    if (!user) {
+      throw new UnauthorizedException();
     }
 
-    if (user) {
-      const userData = await this.prisma.clients.findUnique({
+    return {
+      success: true,
+      message: '',
+      user: user,
+    };
+  }
+  async changePassword(password, { user }: ExtendedRequest): Promise<any> {
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+
+    if (user.role === 'admin') {
+      await this.prisma.admin.update({
         where: {
           id: user.id,
         },
-        select: {
-          id: true,
-          username: true,
-          password: true,
-          productionSite: {
-            select: {
-              id: true,
-              placeName: true,
-              machines: {
-                select: {
-                  id: true,
-                  machineName: true,
-                  pieces: {
-                    select: {
-                      id: true,
-                      pieceName: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
+        data: {
+          password: hash,
         },
       });
-
-      return {
-        success: true,
-        message: '',
-        client: userData,
-      };
+    } else {
+      await this.prisma.clients.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          password: hash,
+        },
+      });
     }
 
-    throw new UnauthorizedException();
+    return {
+      success: true,
+      message: 'Password updated successfully!',
+    };
   }
 }

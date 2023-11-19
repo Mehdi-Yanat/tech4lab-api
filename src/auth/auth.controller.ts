@@ -9,8 +9,8 @@ import {
   Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from 'src/clients/clients.dto';
 import ExtendedRequest from 'src/interface';
+import { ChangePasswordDto, LoginDto } from './auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -38,5 +38,13 @@ export class AuthController {
   @Get('profile')
   getDetails(@Req() req: ExtendedRequest) {
     return this.authService.getDetails(req);
+  }
+
+  @Post('change')
+  changePassword(
+    @Body() { password }: ChangePasswordDto,
+    @Req() req: ExtendedRequest,
+  ) {
+    return this.authService.changePassword(password, req);
   }
 }

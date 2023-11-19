@@ -95,4 +95,28 @@ export class AdminService {
       };
     }
   }
+
+  async getAllClients({ admin }: ExtendedRequest): Promise<any> {
+    if (!admin) {
+      throw new UnauthorizedException();
+    }
+
+    const clients = await this.prisma.clients.findMany({
+      select: {
+        id: true,
+        username: true,
+        productionSite: {
+          select: {
+            placeName: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: '',
+      clients,
+    };
+  }
 }

@@ -19,6 +19,12 @@ import { SuperAdminMiddleware } from './middlewares/admin-auth.middlewares';
 import { ExcelService } from './excel.service';
 import { CsvService } from './csv.service';
 import { AuthMiddleware } from './middlewares/auth.middlewares';
+import { SitesController } from './sites/sites.controller';
+import { SitesService } from './sites/sites.service';
+import { MachinesController } from './machines/machines.controller';
+import { MachinesService } from './machines/machines.service';
+import { PiecesService } from './pieces/pieces.service';
+import { PiecesController } from './pieces/pieces.controller';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -29,7 +35,14 @@ import { AuthMiddleware } from './middlewares/auth.middlewares';
       secret: process.env.SECRET_KEY, // Replace with your actual secret key
     }),
   ],
-  controllers: [AppController, AdminController, AuthController],
+  controllers: [
+    AppController,
+    AdminController,
+    AuthController,
+    SitesController,
+    MachinesController,
+    PiecesController,
+  ],
   providers: [
     AppService,
     AdminService,
@@ -38,6 +51,9 @@ import { AuthMiddleware } from './middlewares/auth.middlewares';
     JwtStrategy,
     ExcelService,
     CsvService,
+    SitesService,
+    MachinesService,
+    PiecesService,
   ],
   exports: [JwtStrategy],
 })
@@ -52,10 +68,32 @@ export class AppModule implements NestModule {
         path: 'admin/upload',
         method: RequestMethod.POST,
       },
+      {
+        path: 'admin/get/clients',
+        method: RequestMethod.GET,
+      },
     );
-    consumer.apply(AuthMiddleware).forRoutes({
-      path: 'auth/profile',
-      method: RequestMethod.GET,
-    });
+    consumer.apply(AuthMiddleware).forRoutes(
+      {
+        path: 'auth/profile',
+        method: RequestMethod.GET,
+      },
+      {
+        path: 'auth/change',
+        method: RequestMethod.POST,
+      },
+      {
+        path: 'production-sites',
+        method: RequestMethod.GET,
+      },
+      {
+        path: 'machines',
+        method: RequestMethod.GET,
+      },
+      {
+        path: 'pieces',
+        method: RequestMethod.GET,
+      },
+    );
   }
 }

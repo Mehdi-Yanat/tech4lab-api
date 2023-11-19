@@ -26,26 +26,23 @@ export class AuthMiddleware implements NestMiddleware {
 
       const verifiedToken: any = jwt.verify(token, process.env.SECRET_KEY); // Replace with your secret key
 
-      const user = await this.prisma.clients.findUnique({
-        where: { id: verifiedToken.sub },
-      });
-
-      const admin = await this.prisma.admin.findUnique({
-        where: { id: verifiedToken.sub },
-      });
-
-      if (user) {
-        delete user.password;
-        delete user.tokens;
-
-        req.user = user;
-      }
-
-      if (admin) {
-        delete admin.password;
+      if (verifiedToken.roles == 'admin') {
+        const admin = await this.prisma.admin.findUnique({
+          where: { id: verifiedToken.sub },
+        });
         delete admin.tokens;
 
-        req.admin = admin;
+        req.user = admin;
+      } else {
+        const user = await this.prisma.clients.findUnique({
+          where: { id: verifiedToken.sub },
+        });
+
+        if (user) {
+          delete user.tokens;
+
+          req.user = user;
+        }
       }
 
       next();
