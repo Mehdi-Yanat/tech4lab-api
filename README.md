@@ -34,6 +34,14 @@ $ npm install
 
 ## Running the app
 
+1. Create a `.env` file at the root of the project with the following properties:
+
+```
+DATABASE_URL=""
+ADMIN_PASSWORD=""
+SECRET_KEY=""
+```
+
 ```bash
 # development
 $ npm run start
